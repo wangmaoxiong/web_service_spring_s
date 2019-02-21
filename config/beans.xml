@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:mvc="http://www.springframework.org/schema/mvc"
+       xmlns:tx="http://www.springframework.org/schema/tx"
+       xmlns:jaxws="http://cxf.apache.org/jaxws"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+	   					   http://www.springframework.org/schema/beans/spring-beans-4.3.xsd
+						   http://www.springframework.org/schema/context
+						   http://www.springframework.org/schema/context/spring-context-4.3.xsd
+		              	   http://www.springframework.org/schema/tx
+						   http://www.springframework.org/schema/tx/spring-tx-4.3.xsd
+		              	   http://www.springframework.org/schema/mvc
+		              	   http://www.springframework.org/schema/mvc/spring-mvc-4.3.xsd
+		              	   http://cxf.apache.org/jaxws
+		              	   http://cxf.apache.org/schemas/jaxws.xsd">
+
+    <!-- 包扫描,因为没有操作数据库，所以没有dao层，只有servive层-->
+    <context:component-scan base-package="com.lct.www.service.impl"/>
+
+    <!-- 引入 cxf 的一些核心配置，这些文件文件都在导入的 CXF 核心包中已经提供了的 -->
+    <import resource="classpath:META-INF/cxf/cxf.xml"/>
+    <!-- 如果是 2.5.9 这样的老版本 cxf，则还有以下两个文件也要写上，3.3版本时已经没有了，所以不要写-->
+    <!--<import resource="classpath:META-INF/cxf/cxf-extension-soap.xml"/>-->
+    <!--<import resource="classpath:META-INF/cxf/cxf-servlet.xml"/>-->
+
+    <!-- webService服务终端配置-->
+    <!-- id：标识此服务终端，唯一，自定义名称即可，因为可以写多个 endpoint,千万注意不要和其它bean的名称冲突，特别是service层 -->
+    <!-- implementor：服务接口的实现类全路径-->
+    <!-- address：将来客户端请求 webService url -->
+    <!-- 相当于Endpoint.publish("http://localhost:8080/web_service_spring_s/userService", UserServiceImpl());-->
+    <!-- 经实测，address 属性值无法多级，如 /cxf/userService，则只有 /cxf有效，后面的 /userService无效-->
+    <jaxws:endpoint id="userServiceWebS" implementor="com.lct.www.service.impl.UserServiceImpl"
+                    address="/userService">
+
+        <!-- 配置 CXF 入拦截器-->
+        <jaxws:inInterceptors>
+            <!-- LoggingInInterceptor：这是 CXF 默认提供的日志入拦截器，在开发调试阶段有用，部署阶段可以删除-->
+            <bean class="org.apache.cxf.interceptor.LoggingInInterceptor"/>
+            <!-- WsUserInterceptor：自定义的入拦截器，用于账号密码验证-->
+            <bean class="com.lct.www.interceptors.WsUserInterceptor"/>
+        </jaxws:inInterceptors>
+    </jaxws:endpoint>
+</beans>
